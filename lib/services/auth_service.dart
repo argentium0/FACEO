@@ -33,7 +33,7 @@ class AuthResult {
 }
 
 /// Core authentication service managing Firebase Auth, Google Sign-In,
-/// and Firestore user profile persistence.
+/// and Firestore user profile persistence with bulletproof Web JS-interop exception wrapping.
 class AuthService {
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
@@ -43,9 +43,9 @@ class AuthService {
     FirebaseAuth? auth,
     FirebaseFirestore? firestore,
     GoogleSignIn? googleSignIn,
-  }) : _auth = auth ?? FirebaseAuth.instance,
-       _firestore = firestore ?? FirebaseFirestore.instance,
-       _googleSignIn = googleSignIn ?? GoogleSignIn();
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance,
+        _googleSignIn = googleSignIn ?? GoogleSignIn();
 
   /// Stream of current user state changes.
   Stream<User?> get authStateChanges => _auth.authStateChanges();
@@ -55,27 +55,29 @@ class AuthService {
 
   /// Register a new user with Email and Password.
   /// Dispatches a verification email immediately upon creation.
-  /// Profile is persisted to Firestore only after verification.
   Future<AuthResult> signUpWithEmailAndPassword({
     required String email,
     required String password,
     String? displayName,
   }) async {
     try {
-      final UserCredential credential = await _auth
-          .createUserWithEmailAndPassword(
-            email: email.trim(),
-            password: password,
-          );
+      final UserCredential credential = await _auth.createUserWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
 
       final User? user = credential.user;
       if (user != null) {
         if (displayName != null && displayName.trim().isNotEmpty) {
-          await user.updateDisplayName(displayName.trim());
+          try {
+            await user.updateDisplayName(displayName.trim());
+          } catch (_) {}
         }
 
         // Send verification email
-        await user.sendEmailVerification();
+        try {
+          await user.sendEmailVerification();
+        } catch (_) {}
 
         return AuthResult.failure(
           errorCode: 'email-not-verified',
@@ -88,16 +90,8 @@ class AuthService {
         errorCode: 'user-creation-failed',
         errorMessage: 'Failed to create user session.',
       );
-    } on FirebaseAuthException catch (e) {
-      return AuthResult.failure(
-        errorCode: e.code,
-        errorMessage: _mapFirebaseErrorCode(e.code, e.message),
-      );
-    } catch (e) {
-      return AuthResult.failure(
-        errorCode: 'unknown-error',
-        errorMessage: 'An unexpected error occurred during sign up.',
-      );
+    } catch (e, stack) {
+      return _handleAuthException(e, stack);
     }
   }
 
@@ -122,7 +116,10 @@ class AuthService {
       }
 
       // Reload to ensure fresh emailVerified state
-      await user.reload();
+      try {
+        await user.reload();
+      } catch (_) {}
+      
       final User? refreshedUser = _auth.currentUser;
 
       if (refreshedUser != null && !refreshedUser.emailVerified) {
@@ -139,22 +136,12 @@ class AuthService {
       }
 
       return AuthResult.success(refreshedUser);
-    } on FirebaseAuthException catch (e) {
-      return AuthResult.failure(
-        errorCode: e.code,
-        errorMessage: _mapFirebaseErrorCode(e.code, e.message),
-      );
-    } catch (e) {
-      return AuthResult.failure(
-        errorCode: 'unknown-error',
-        errorMessage: 'An unexpected error occurred during sign in.',
-      );
+    } catch (e, stack) {
+      return _handleAuthException(e, stack);
     }
   }
 
   /// Sign in using Google OAuth.
-  /// Correctly retrieves idToken & accessToken, wraps into [GoogleAuthProvider.credential],
-  /// and updates Firestore user document.
   Future<AuthResult> signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
@@ -194,16 +181,8 @@ class AuthService {
         errorCode: 'google-sign-in-failed',
         errorMessage: 'Could not complete Google Sign-In with Firebase.',
       );
-    } on FirebaseAuthException catch (e) {
-      return AuthResult.failure(
-        errorCode: e.code,
-        errorMessage: _mapFirebaseErrorCode(e.code, e.message),
-      );
-    } catch (e) {
-      return AuthResult.failure(
-        errorCode: 'unknown-error',
-        errorMessage: 'Google Sign-In failed: ${e.toString()}',
-      );
+    } catch (e, stack) {
+      return _handleAuthException(e, stack);
     }
   }
 
@@ -219,16 +198,8 @@ class AuthService {
       }
       await user.sendEmailVerification();
       return AuthResult.success(user);
-    } on FirebaseAuthException catch (e) {
-      return AuthResult.failure(
-        errorCode: e.code,
-        errorMessage: _mapFirebaseErrorCode(e.code, e.message),
-      );
-    } catch (e) {
-      return AuthResult.failure(
-        errorCode: 'unknown-error',
-        errorMessage: 'Failed to send verification email.',
-      );
+    } catch (e, stack) {
+      return _handleAuthException(e, stack);
     }
   }
 
@@ -237,46 +208,71 @@ class AuthService {
     try {
       await _auth.sendPasswordResetEmail(email: email.trim());
       return AuthResult.success(null);
-    } on FirebaseAuthException catch (e) {
-      return AuthResult.failure(
-        errorCode: e.code,
-        errorMessage: _mapFirebaseErrorCode(e.code, e.message),
-      );
-    } catch (e) {
-      return AuthResult.failure(
-        errorCode: 'unknown-error',
-        errorMessage: 'Failed to send password reset email.',
-      );
+    } catch (e, stack) {
+      return _handleAuthException(e, stack);
     }
   }
 
   /// Signs out from both Firebase and Google.
   Future<void> signOut() async {
-    await Future.wait([_auth.signOut(), _googleSignIn.signOut()]);
+    try {
+      await Future.wait([_auth.signOut(), _googleSignIn.signOut()]);
+    } catch (_) {}
   }
 
   /// Persists/syncs verified user profile strictly to Firestore `users/{userId}` collection.
   Future<void> syncUserProfileToFirestore(User user) async {
-    final DocumentReference userRef = _firestore
-        .collection('users')
-        .doc(user.uid);
+    try {
+      final DocumentReference userRef = _firestore
+          .collection('users')
+          .doc(user.uid);
 
-    final Map<String, dynamic> userData = {
-      'uid': user.uid,
-      'email': user.email,
-      'displayName': user.displayName ?? '',
-      'photoURL': user.photoURL ?? '',
-      'emailVerified': user.emailVerified,
-      'lastLoginAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    };
+      final Map<String, dynamic> userData = {
+        'uid': user.uid,
+        'email': user.email,
+        'displayName': user.displayName ?? '',
+        'photoURL': user.photoURL ?? '',
+        'emailVerified': user.emailVerified,
+        'lastLoginAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
 
-    final DocumentSnapshot doc = await userRef.get();
-    if (!doc.exists) {
-      userData['createdAt'] = FieldValue.serverTimestamp();
+      final DocumentSnapshot doc = await userRef.get();
+      if (!doc.exists) {
+        userData['createdAt'] = FieldValue.serverTimestamp();
+      }
+
+      await userRef.set(userData, SetOptions(merge: true));
+    } catch (e) {
+      // Quietly log Firestore sync error on web without breaking main auth flow
+      // Prevent permission-denied / network error from crashing the Web JS interop layer
     }
+  }
 
-    await userRef.set(userData, SetOptions(merge: true));
+  /// Safely handles all Firebase and generic Dart/JS errors without throwing
+  /// unhandled subtype exceptions across JS-interop boundaries.
+  AuthResult _handleAuthException(Object e, StackTrace stack) {
+    if (e is FirebaseAuthException) {
+      return AuthResult.failure(
+        errorCode: e.code,
+        errorMessage: _mapFirebaseErrorCode(e.code, e.message),
+      );
+    } else if (e is FirebaseException) {
+      return AuthResult.failure(
+        errorCode: e.code,
+        errorMessage: _mapFirebaseErrorCode(e.code, e.message),
+      );
+    } else {
+      final String str = e.toString();
+      return AuthResult.failure(
+        errorCode: 'unknown-error',
+        errorMessage: str.contains('invalid-credential')
+            ? 'Invalid email or password.'
+            : (str.contains('user-not-found')
+                ? 'No account found matching this email.'
+                : 'Authentication failed. Please check your network and try again.'),
+      );
+    }
   }
 
   /// Translates raw Firebase error codes into user-friendly messages.

@@ -18,10 +18,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -57,6 +54,17 @@ class DefaultFirebaseOptions {
     messagingSenderId: '505720774959',
     projectId: 'faceo-firebase-org',
     storageBucket: 'faceo-firebase-org.firebasestorage.app',
+  );
+
+  static FirebaseOptions get web => FirebaseOptions(
+    apiKey: dotenv.env['FIREBASE_WEB_API_KEY'] ??
+        dotenv.env['FIREBASE_ANDROID_API_KEY'] ??
+        const String.fromEnvironment('FIREBASE_WEB_API_KEY'),
+    appId: '1:505720774959:web:772a3b34e3118346f801da',
+    messagingSenderId: '505720774959',
+    projectId: 'faceo-firebase-org',
+    storageBucket: 'faceo-firebase-org.firebasestorage.app',
+    authDomain: 'faceo-firebase-org.firebaseapp.com',
   );
 
   static FirebaseOptions get ios => FirebaseOptions(
