@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "505720774959",
+    "project_id": "faceo-firebase-org",
+    "storage_bucket": "faceo-firebase-org.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:505720774959:android:772a3b34e3118346f801da",
+        "android_client_info": {
+          "package_name": "com.example.faceo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDrgGksVOkJCRWhuCBASav-tqUopqwXwHc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
