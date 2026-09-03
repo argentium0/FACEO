@@ -2,8 +2,11 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:zego_express_engine/zego_express_engine.dart';
 import '../../app/theme/design_tokens.dart';
+import '../../services/call_session_controller.dart';
 import '../../services/room_service.dart';
+import '../../services/speech_service.dart';
 import '../../services/zego_service.dart';
+import '../widgets/audio_first_overlay.dart';
 import '../widgets/countdown_banner.dart';
 
 /// Dedicated 1-on-1 Video Call Screen utilizing [ZegoCanvas] and FACEO Design Tokens.
@@ -50,7 +53,17 @@ class _CallScreen1v1State extends State<CallScreen1v1> {
     super.initState();
     _zegoService = widget.zegoService ?? ZegoService();
     _roomService = widget.roomService ?? RoomService();
+    CallSessionController.instance.isAudioOnlyFallbackActive.addListener(_handleFallbackChanged);
     _initializeCallSession();
+  }
+
+  void _handleFallbackChanged() {
+    final isFallback = CallSessionController.instance.isAudioOnlyFallbackActive.value;
+    if (isFallback) {
+      SpeechService.instance.startListening();
+    } else {
+      SpeechService.instance.stopListening();
+    }
   }
 
   Future<void> _initializeCallSession() async {
@@ -193,6 +206,8 @@ class _CallScreen1v1State extends State<CallScreen1v1> {
 
   @override
   void dispose() {
+    CallSessionController.instance.isAudioOnlyFallbackActive.removeListener(_handleFallbackChanged);
+    SpeechService.instance.stopListening();
     _roomService.leaveRoomPresence(
       roomId: widget.roomId,
       userId: widget.userId,
@@ -210,6 +225,25 @@ class _CallScreen1v1State extends State<CallScreen1v1> {
           children: [
             // Main 1v1 Stream Surface (Remote Feed or Fullscreen Local)
             _buildMainSurface(),
+
+            // Audio-First Low Bandwidth Fallback Overlay with Live Captions
+            ValueListenableBuilder<bool>(
+              valueListenable: CallSessionController.instance.isAudioOnlyFallbackActive,
+              builder: (context, isFallback, child) {
+                if (!isFallback) return const SizedBox.shrink();
+                return ValueListenableBuilder<String>(
+                  valueListenable: SpeechService.instance.recognizedText,
+                  builder: (context, recognizedText, child) {
+                    return AudioFirstOverlay(
+                      recognizedText: recognizedText,
+                      userName: widget.userName,
+                      isListening: SpeechService.instance.isListening.value,
+                      errorMessage: SpeechService.instance.errorMessage.value,
+                    );
+                  },
+                );
+              },
+            ),
 
             // Top Status & Countdown Bar
             Positioned(
