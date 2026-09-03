@@ -6,8 +6,10 @@ import '../../services/room_sweeper_service.dart';
 import 'active_call_screen.dart';
 import 'call_screen_1v1.dart';
 
-/// Minimalist Home Dashboard adhering strictly to FACEO Design Tokens.
-/// Features search/join room field, quick action feature tiles, and call history.
+/// Minimalist, High-Contrast Home Dashboard adhering strictly to FACEO Design Tokens.
+/// Features a dark theme (#1F1F1F / #313131), expressive Poppins typography, 
+/// pill-shaped inputs/buttons, category tiles with neon accents (#FF95DD, #F6FF7F, #B7BEFE), 
+/// and zero 3D visual noise.
 class HomeDashboard extends StatefulWidget {
   final AuthService? authService;
   final RoomService? roomService;
@@ -27,27 +29,64 @@ class _HomeDashboardState extends State<HomeDashboard> {
   late final RoomService _roomService;
 
   final TextEditingController _roomIdController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   bool _isCreatingRoom = false;
 
-  // Mock call history items
+  // Category Cards Data as referenced in Design Spec
+  final List<Map<String, dynamic>> _categories = [
+    {
+      'title': 'Financial Advisor',
+      'subtitle': '1-on-1 expert consultation',
+      'icon': Icons.account_balance_wallet_rounded,
+      'accent': DesignTokens.accentNeonPink,
+      'tag': 'Popular',
+      'isGroup': false,
+    },
+    {
+      'title': 'Budget Optimizer',
+      'subtitle': 'Group strategy & review',
+      'icon': Icons.pie_chart_rounded,
+      'accent': DesignTokens.accentNeonYellow,
+      'tag': 'Featured',
+      'isGroup': true,
+    },
+    {
+      'title': 'Instant Group Call',
+      'subtitle': 'Multi-party video room',
+      'icon': Icons.groups_rounded,
+      'accent': DesignTokens.accentPeriwinkle,
+      'tag': 'Quick',
+      'isGroup': true,
+    },
+    {
+      'title': '1-on-1 Consultation',
+      'subtitle': 'Private peer meeting',
+      'icon': Icons.videocam_rounded,
+      'accent': DesignTokens.accentNeonPink,
+      'tag': 'Private',
+      'isGroup': false,
+    },
+  ];
+
+  // Mock recent call history sessions
   final List<Map<String, String>> _callHistory = [
     {
-      'title': 'Engineering Team Sync',
-      'roomId': 'room-eng-902',
+      'title': 'Financial Advisory Session',
+      'roomId': 'room-fin-902',
       'time': 'Today, 2:30 PM',
-      'type': 'Group Call',
+      'type': '1-on-1 Consultation',
     },
     {
-      'title': 'Sarah Jenkins',
-      'roomId': 'room-1v1-742',
+      'title': 'Quarterly Budget Planning',
+      'roomId': 'room-bdg-742',
       'time': 'Yesterday, 6:15 PM',
-      'type': '1-on-1 Call',
+      'type': 'Budget Optimizer',
     },
     {
-      'title': 'Product Design Review',
-      'roomId': 'room-dsgn-109',
+      'title': 'Engineering Team Sync',
+      'roomId': 'room-eng-109',
       'time': 'Aug 30, 11:00 AM',
-      'type': 'Group Call',
+      'type': 'Instant Group Call',
     },
   ];
 
@@ -56,17 +95,18 @@ class _HomeDashboardState extends State<HomeDashboard> {
     super.initState();
     _authService = widget.authService ?? AuthService();
     _roomService = widget.roomService ?? RoomService();
-    // Run quiet background sweep to purge expired rooms
+    // Background sweep to clean up expired rooms quietly
     RoomSweeperService().sweepExpiredRooms();
   }
 
   @override
   void dispose() {
     _roomIdController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
-  Future<void> _createAndJoinRoom({bool isGroup = true}) async {
+  Future<void> _createAndJoinRoom({bool isGroup = true, String? customTitle}) async {
     final currentUser = _authService.currentUser;
     final userId = currentUser?.uid ?? 'user-guest-${DateTime.now().millisecondsSinceEpoch % 1000}';
     final userName = currentUser?.displayName ?? currentUser?.email?.split('@').first ?? 'Guest User';
@@ -76,7 +116,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
     try {
       final roomId = await _roomService.createRoom(
         hostUserId: userId,
-        title: isGroup ? 'Group Video Session' : '1-on-1 Call',
+        title: customTitle ?? (isGroup ? 'Group Video Session' : '1-on-1 Call'),
         isGroupCall: isGroup,
       );
 
@@ -160,41 +200,52 @@ class _HomeDashboardState extends State<HomeDashboard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top User Bar
-              _buildTopUserBar(displayName),
+              // Top User Header
+              _buildUserHeader(displayName),
 
               const SizedBox(height: 24),
 
-              // Search / Room Code Join Card
-              _buildJoinRoomCard(),
+              // Pill Search / Room Code Input Bar
+              _buildPillSearchInput(),
 
               const SizedBox(height: 28),
 
-              // Quick Action Feature Tiles
+              // Category Cards Section Title
               Text(
-                'Quick Actions',
-                style: DesignTokens.headlineMedium,
+                'Explore Categories',
+                style: DesignTokens.headlineLarge,
               ),
               const SizedBox(height: 14),
-              _buildFeatureTiles(),
+
+              // Category Cards Grid
+              _buildCategoryCardsGrid(),
 
               const SizedBox(height: 32),
 
-              // Call History Section
+              // Recent Calls / Sessions Section Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Recent Calls',
+                    'Recent Sessions',
                     style: DesignTokens.headlineMedium,
                   ),
-                  Text(
-                    '${_callHistory.length} Sessions',
-                    style: DesignTokens.caption,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: DesignTokens.cardSurface,
+                      borderRadius: DesignTokens.radiusPill,
+                    ),
+                    child: Text(
+                      '${_callHistory.length} Total',
+                      style: DesignTokens.caption.copyWith(color: DesignTokens.accentPeriwinkle),
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 14),
+
+              // Call History List
               _buildCallHistoryList(),
             ],
           ),
@@ -203,17 +254,23 @@ class _HomeDashboardState extends State<HomeDashboard> {
     );
   }
 
-  Widget _buildTopUserBar(String displayName) {
+  Widget _buildUserHeader(String displayName) {
     return Row(
       children: [
-        CircleAvatar(
-          radius: 22,
-          backgroundColor: DesignTokens.accentPeriwinkle,
-          child: Text(
-            displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
-            style: DesignTokens.headlineMedium.copyWith(
-              color: DesignTokens.textDark,
-              fontSize: 18,
+        Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            color: DesignTokens.accentPeriwinkle,
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
+              style: DesignTokens.headlineLarge.copyWith(
+                color: DesignTokens.textDark,
+                fontSize: 20,
+              ),
             ),
           ),
         ),
@@ -223,12 +280,16 @@ class _HomeDashboardState extends State<HomeDashboard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Welcome back,',
-                style: DesignTokens.caption,
+                'FACEO DASHBOARD',
+                style: DesignTokens.caption.copyWith(
+                  letterSpacing: 1.2,
+                  color: DesignTokens.accentNeonYellow,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               Text(
                 displayName,
-                style: DesignTokens.headlineMedium.copyWith(fontSize: 18),
+                style: DesignTokens.headlineLarge.copyWith(fontSize: 20),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -236,7 +297,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
           ),
         ),
         IconButton(
-          icon: const Icon(Icons.logout_rounded, color: DesignTokens.textSecondary),
+          icon: const Icon(Icons.logout_rounded, color: DesignTokens.textSecondary, size: 22),
           tooltip: 'Sign Out',
           onPressed: () async {
             await _authService.signOut();
@@ -246,124 +307,147 @@ class _HomeDashboardState extends State<HomeDashboard> {
     );
   }
 
-  Widget _buildJoinRoomCard() {
+  Widget _buildPillSearchInput() {
     return Container(
-      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: DesignTokens.cardSurface,
-        borderRadius: DesignTokens.radiusCard,
+        borderRadius: DesignTokens.radiusPill,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      child: Row(
         children: [
-          Text(
-            'Join Meeting Room',
-            style: DesignTokens.bodyLarge,
+          const SizedBox(width: 12),
+          const Icon(
+            Icons.search_rounded,
+            color: DesignTokens.accentPeriwinkle,
+            size: 22,
           ),
-          const SizedBox(height: 6),
-          Text(
-            'Enter a room code to join an ongoing video session.',
-            style: DesignTokens.caption,
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: _roomIdController,
+              style: DesignTokens.bodyMedium,
+              decoration: InputDecoration(
+                hintText: 'Enter room code or search session...',
+                hintStyle: DesignTokens.bodySecondary,
+                filled: false,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+              ),
+            ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _roomIdController,
-                  style: DesignTokens.bodyMedium,
-                  decoration: const InputDecoration(
-                    hintText: 'e.g. room-101',
-                    prefixIcon: Icon(Icons.meeting_room_outlined, color: DesignTokens.textSecondary, size: 20),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton(
-                onPressed: () => _joinExistingRoom(_roomIdController.text),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: DesignTokens.accentPeriwinkle,
-                  foregroundColor: DesignTokens.textDark,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                ),
-                child: const Text('Join'),
-              ),
-            ],
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: () => _joinExistingRoom(_roomIdController.text),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: DesignTokens.accentNeonPink,
+              foregroundColor: DesignTokens.textDark,
+              elevation: 0,
+              shape: const StadiumBorder(),
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+            ),
+            child: Text(
+              'Join',
+              style: DesignTokens.buttonTextDark,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFeatureTiles() {
-    return Row(
-      children: [
-        // Instant Group Call Tile
-        Expanded(
-          child: _buildActionTile(
-            title: 'New Group Call',
-            subtitle: 'Instant multi-party',
-            icon: Icons.groups_rounded,
-            accentColor: DesignTokens.accentPeriwinkle,
-            onTap: _isCreatingRoom ? null : () => _createAndJoinRoom(isGroup: true),
-          ),
-        ),
-        const SizedBox(width: 14),
-
-        // Direct 1-on-1 Call Tile
-        Expanded(
-          child: _buildActionTile(
-            title: '1-on-1 Call',
-            subtitle: 'Direct peer video',
-            icon: Icons.person_rounded,
-            accentColor: DesignTokens.accentNeonPink,
-            onTap: _isCreatingRoom ? null : () => _createAndJoinRoom(isGroup: false),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionTile({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color accentColor,
-    required VoidCallback? onTap,
-  }) {
-    return Material(
-      color: DesignTokens.cardSurface,
-      borderRadius: DesignTokens.radiusCard,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: DesignTokens.radiusCard,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: accentColor, size: 24),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                title,
-                style: DesignTokens.bodyLarge,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: DesignTokens.caption,
-              ),
-            ],
-          ),
-        ),
+  Widget _buildCategoryCardsGrid() {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _categories.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 14,
+        mainAxisSpacing: 14,
+        childAspectRatio: 1.1,
       ),
+      itemBuilder: (context, index) {
+        final cat = _categories[index];
+        final Color accentColor = cat['accent'] as Color;
+
+        return Material(
+          color: DesignTokens.cardSurface,
+          borderRadius: DesignTokens.radiusCard,
+          elevation: 0,
+          child: InkWell(
+            onTap: _isCreatingRoom
+                ? null
+                : () => _createAndJoinRoom(
+                      isGroup: cat['isGroup'] as bool,
+                      customTitle: cat['title'] as String,
+                    ),
+            borderRadius: DesignTokens.radiusCard,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: accentColor.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          cat['icon'] as IconData,
+                          color: accentColor,
+                          size: 22,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: accentColor,
+                          borderRadius: DesignTokens.radiusPill,
+                        ),
+                        child: Text(
+                          cat['tag'] as String,
+                          style: DesignTokens.caption.copyWith(
+                            color: DesignTokens.textDark,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        cat['title'] as String,
+                        style: DesignTokens.titleMedium,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        cat['subtitle'] as String,
+                        style: DesignTokens.caption,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -375,7 +459,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
       separatorBuilder: (context, index) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final item = _callHistory[index];
-        final is1v1 = item['type'] == '1-on-1 Call';
+        final is1v1 = item['type']!.contains('1-on-1') || item['type']!.contains('Consultation');
 
         return Container(
           decoration: BoxDecoration(
@@ -396,15 +480,21 @@ class _HomeDashboardState extends State<HomeDashboard> {
             ),
             title: Text(
               item['title']!,
-              style: DesignTokens.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+              style: DesignTokens.titleMedium.copyWith(fontSize: 15),
             ),
             subtitle: Text(
               '${item['type']} • ${item['time']}',
               style: DesignTokens.caption,
             ),
-            trailing: IconButton(
-              icon: const Icon(Icons.call_rounded, color: DesignTokens.accentPeriwinkle, size: 20),
-              onPressed: () => _joinExistingRoom(item['roomId']!, is1v1: is1v1),
+            trailing: Container(
+              decoration: BoxDecoration(
+                color: DesignTokens.bgDeepBlack,
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.call_rounded, color: DesignTokens.accentNeonYellow, size: 18),
+                onPressed: () => _joinExistingRoom(item['roomId']!, is1v1: is1v1),
+              ),
             ),
           ),
         );
