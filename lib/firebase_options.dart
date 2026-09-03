@@ -3,6 +3,7 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -49,16 +50,18 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDrgGksVOkJCRWhuCBASav-tqUopqwXwHc',
+  static FirebaseOptions get android => FirebaseOptions(
+    apiKey: dotenv.env['FIREBASE_ANDROID_API_KEY'] ??
+        const String.fromEnvironment('FIREBASE_ANDROID_API_KEY'),
     appId: '1:505720774959:android:772a3b34e3118346f801da',
     messagingSenderId: '505720774959',
     projectId: 'faceo-firebase-org',
     storageBucket: 'faceo-firebase-org.firebasestorage.app',
   );
 
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCqViZAX5Mj5bmexuDoXMcqHUb41tV0Arg',
+  static FirebaseOptions get ios => FirebaseOptions(
+    apiKey: dotenv.env['FIREBASE_IOS_API_KEY'] ??
+        const String.fromEnvironment('FIREBASE_IOS_API_KEY'),
     appId: '1:505720774959:ios:65c8028c2fe06428f801da',
     messagingSenderId: '505720774959',
     projectId: 'faceo-firebase-org',
@@ -66,3 +69,4 @@ class DefaultFirebaseOptions {
     iosBundleId: 'com.example.faceo',
   );
 }
+

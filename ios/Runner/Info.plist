@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>FACEO uses speech recognition for live captions during low-bandwidth audio fallback.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>FACEO requires microphone access for audio calling and live captions.</string>
 </dict>
 </plist>

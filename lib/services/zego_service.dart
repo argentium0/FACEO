@@ -187,6 +187,13 @@ class ZegoService {
     await ZegoExpressEngine.instance.useFrontCamera(useFront);
   }
 
+  /// Mutes or unmutes local video publishing stream while keeping audio active.
+  Future<void> mutePublishStreamVideo(bool mute) async {
+    if (_isEngineInitialized) {
+      await ZegoExpressEngine.instance.mutePublishStreamVideo(mute);
+    }
+  }
+
   /// Logs out of current room, stops stream publishing/playing, and releases engine resources.
   Future<void> leaveRoomAndDestroyEngine() async {
     if (_currentRoomId != null) {
