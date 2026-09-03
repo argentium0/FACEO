@@ -1,11 +1,14 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:zego_express_engine/zego_express_engine.dart';
 import '../../app/theme/design_tokens.dart';
 import '../../services/room_service.dart';
 import '../../services/zego_service.dart';
+import '../widgets/countdown_banner.dart';
 
 /// Dedicated 1-on-1 Video Call Screen utilizing [ZegoCanvas] and FACEO Design Tokens.
-/// Features a full-screen remote stream canvas with a floating local PIP canvas.
+/// Features a full-screen remote stream canvas with a floating local PIP canvas
+/// and Ephemeral Room countdown warning banner.
 class CallScreen1v1 extends StatefulWidget {
   final String roomId;
   final String userId;
@@ -32,6 +35,7 @@ class _CallScreen1v1State extends State<CallScreen1v1> {
 
   bool _isLoading = true;
   String? _errorMessage;
+  int? _emptyAtMs;
 
   Widget? _localVideoCanvas;
   Widget? _remoteVideoCanvas;
@@ -51,12 +55,31 @@ class _CallScreen1v1State extends State<CallScreen1v1> {
 
   Future<void> _initializeCallSession() async {
     try {
-      // 1. Join RTDB Presence Node with onDisconnect hooks
+      // Check if room has an active emptyAt countdown before joining presence
+      try {
+        final snapshot = await FirebaseDatabase.instance.ref('rooms/${widget.roomId}/emptyAt').get();
+        if (snapshot.exists && snapshot.value is int) {
+          if (mounted) {
+            setState(() {
+              _emptyAtMs = snapshot.value as int;
+            });
+          }
+        }
+      } catch (_) {}
+
+      // 1. Join RTDB Presence Node (removes emptyAt and cancels countdown)
       await _roomService.joinRoomPresence(
         roomId: widget.roomId,
         userId: widget.userId,
         userName: widget.userName,
       );
+
+      // Presence re-established: cancel banner state
+      if (mounted) {
+        setState(() {
+          _emptyAtMs = null;
+        });
+      }
 
       // 2. Initialize ZegoCloud Engine using dotenv credentials
       await _zegoService.createEngineWithProfile();
@@ -156,6 +179,18 @@ class _CallScreen1v1State extends State<CallScreen1v1> {
     }
   }
 
+  void _handleRoomExpired() {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Room timer expired. Meeting room has been self-destructed.'),
+          backgroundColor: DesignTokens.accentNeonPink,
+        ),
+      );
+      _endCall();
+    }
+  }
+
   @override
   void dispose() {
     _roomService.leaveRoomPresence(
@@ -176,12 +211,25 @@ class _CallScreen1v1State extends State<CallScreen1v1> {
             // Main 1v1 Stream Surface (Remote Feed or Fullscreen Local)
             _buildMainSurface(),
 
-            // Top Status Bar
+            // Top Status & Countdown Bar
             Positioned(
               top: 16,
               left: 20,
               right: 20,
-              child: _buildHeaderBar(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_emptyAtMs != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: CountdownBanner(
+                        emptyAtMs: _emptyAtMs!,
+                        onExpired: _handleRoomExpired,
+                      ),
+                    ),
+                  _buildHeaderBar(),
+                ],
+              ),
             ),
 
             // Bottom Call Controls
@@ -215,7 +263,7 @@ class _CallScreen1v1State extends State<CallScreen1v1> {
 
           // Floating Local PIP Window
           Positioned(
-            top: 70,
+            top: _emptyAtMs != null ? 120 : 70,
             right: 16,
             width: 110,
             height: 160,

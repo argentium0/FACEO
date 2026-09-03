@@ -12,6 +12,7 @@ class DesignTokens {
   static const Color inputBackground = Color(0xFF2A2A2A);
   static const Color accentPeriwinkle = Color(0xFFB7BEFE);
   static const Color accentNeonPink = Color(0xFFFF95DD);
+  static const Color accentNeonYellow = Color(0xFFF6FF7F);
   static const Color textLight = Color(0xFFFFFFFF);
   static const Color textSecondary = Color(0xFF9E9E9E);
   static const Color textDark = Color(0xFF1F1F1F);
