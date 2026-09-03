@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../app/theme/design_tokens.dart';
 import '../../services/auth_service.dart';
 import '../../services/room_service.dart';
+import '../../services/room_sweeper_service.dart';
 import 'active_call_screen.dart';
 import 'call_screen_1v1.dart';
 
@@ -55,6 +56,8 @@ class _HomeDashboardState extends State<HomeDashboard> {
     super.initState();
     _authService = widget.authService ?? AuthService();
     _roomService = widget.roomService ?? RoomService();
+    // Run quiet background sweep to purge expired rooms
+    RoomSweeperService().sweepExpiredRooms();
   }
 
   @override

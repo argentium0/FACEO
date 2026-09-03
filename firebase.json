@@ -1,1 +1,28 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"faceo-firebase-org","appId":"1:505720774959:android:772a3b34e3118346f801da","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"faceo-firebase-org","configurations":{"android":"1:505720774959:android:772a3b34e3118346f801da","ios":"1:505720774959:ios:65c8028c2fe06428f801da"}}}}}}
+{
+  "database": {
+    "rules": "database.rules.json"
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "faceo-firebase-org",
+          "appId": "1:505720774959:android:772a3b34e3118346f801da",
+          "fileOutput": "android/app/google-services.json"
+        }
+      }
+    },
+    "dart": {
+      "lib/firebase_options.dart": {
+        "projectId": "faceo-firebase-org",
+        "configurations": {
+          "android": "1:505720774959:android:772a3b34e3118346f801da",
+          "ios": "1:505720774959:ios:65c8028c2fe06428f801da"
+        }
+      }
+    }
+  }
+}
