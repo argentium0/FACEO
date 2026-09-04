@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:zego_express_engine/zego_express_engine.dart';
+import '../../app/theme/design_tokens.dart';
 import '../../services/zego_service.dart';
 
-/// Active Video Call Screen adhering to FACEO Phase 2 Design System tokens.
+/// Active Video Call Screen adhering strictly to FACEO Design System tokens.
 ///
 /// Features:
 /// - Deep Black (#1F1F1F) canvas background
@@ -32,14 +32,6 @@ class ActiveCallScreen extends StatefulWidget {
 }
 
 class _ActiveCallScreenState extends State<ActiveCallScreen> {
-  // FACEO Design System Color Tokens
-  static const Color _bgDeepBlack = Color(0xFF1F1F1F);
-  static const Color _cardSurface = Color(0xFF313131);
-  static const Color _accentPeriwinkle = Color(0xFFB7BEFE);
-  static const Color _accentNeonPink = Color(0xFFFF95DD);
-  static const Color _textDark = Color(0xFF1F1F1F);
-  static const Color _textLight = Color(0xFFFFFFFF);
-
   late final ZegoService _zegoService;
 
   bool _isLoading = true;
@@ -61,21 +53,17 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
 
   Future<void> _initializeAndJoinRoom() async {
     try {
-      // 1. Initialize ZegoCloud Engine Profile
       await _zegoService.createEngineWithProfile(appId: widget.appId);
 
-      // 2. Set listener for room stream updates
       _zegoService.setStreamUpdateListener((roomId, updateType, streamList) {
         _handleStreamUpdate(updateType, streamList);
       });
 
-      // 3. Retrieve authentication token securely via Firebase Cloud Function
       final token = await _zegoService.fetchZegoToken(
         roomId: widget.roomId,
         userId: widget.userId,
       );
 
-      // 4. Log in to room and publish local stream
       await _zegoService.loginRoom(
         roomId: widget.roomId,
         userId: widget.userId,
@@ -83,7 +71,6 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
         token: token,
       );
 
-      // 5. Build local video view
       final localWidget = await _zegoService.createLocalCanvasView();
 
       if (mounted) {
@@ -165,7 +152,6 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
 
   @override
   void dispose() {
-    // Hardware Cleanup: Logout room and destroy engine on screen pop/disposal
     _zegoService.leaveRoomAndDestroyEngine();
     super.dispose();
   }
@@ -173,30 +159,23 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bgDeepBlack,
+      backgroundColor: DesignTokens.bgDeepBlack,
       body: SafeArea(
         child: Stack(
           children: [
-            // Video Tile Canvas Area
             _buildVideoCanvasGrid(),
-
-            // Top Room Header Info
             Positioned(
               top: 16,
               left: 20,
               right: 20,
               child: _buildHeaderInfo(),
             ),
-
-            // Bottom Control Toolbar
             Positioned(
               bottom: 24,
               left: 0,
               right: 0,
               child: _buildBottomControls(),
             ),
-
-            // Loading / Error Overlay
             if (_isLoading || _errorMessage != null) _buildOverlayState(),
           ],
         ),
@@ -208,9 +187,8 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     final allRemoteWidgets = _remoteVideoWidgets.values.toList();
 
     if (allRemoteWidgets.isEmpty) {
-      // Single full-screen local stream preview
       return Container(
-        color: _bgDeepBlack,
+        color: DesignTokens.bgDeepBlack,
         child: _isCameraEnabled && _localVideoWidget != null
             ? ClipRRect(
                 child: _localVideoWidget!,
@@ -219,10 +197,8 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
       );
     }
 
-    // Grid layout for Multi-party call (Remote feeds + Local PIP preview)
     return Stack(
       children: [
-        // Main Remote Video Grid (Borderless)
         GridView.builder(
           padding: EdgeInsets.zero,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -232,13 +208,11 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
           itemCount: allRemoteWidgets.length,
           itemBuilder: (context, index) {
             return Container(
-              color: _cardSurface,
+              color: DesignTokens.cardSurface,
               child: allRemoteWidgets[index],
             );
           },
         ),
-
-        // Floating Local PIP View
         Positioned(
           top: 70,
           right: 16,
@@ -246,9 +220,14 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
           height: 160,
           child: Container(
             decoration: BoxDecoration(
-              color: _cardSurface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _bgDeepBlack, width: 2),
+              color: DesignTokens.cardSurface,
+              borderRadius: DesignTokens.radiusCard,
+              border: const Border(
+                top: BorderSide(color: DesignTokens.bgDeepBlack, width: 2),
+                bottom: BorderSide(color: DesignTokens.bgDeepBlack, width: 2),
+                left: BorderSide(color: DesignTokens.bgDeepBlack, width: 2),
+                right: BorderSide(color: DesignTokens.bgDeepBlack, width: 2),
+              ),
             ),
             clipBehavior: Clip.antiAlias,
             child: _isCameraEnabled && _localVideoWidget != null
@@ -262,20 +241,19 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
 
   Widget _buildCameraOffPlaceholder(String name, {bool isSmall = false}) {
     return Container(
-      color: _cardSurface,
+      color: DesignTokens.cardSurface,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircleAvatar(
               radius: isSmall ? 20 : 36,
-              backgroundColor: _accentPeriwinkle,
+              backgroundColor: DesignTokens.accentPeriwinkle,
               child: Text(
                 name.isNotEmpty ? name[0].toUpperCase() : 'U',
-                style: GoogleFonts.poppins(
+                style: DesignTokens.headlineMedium.copyWith(
+                  color: DesignTokens.textDark,
                   fontSize: isSmall ? 16 : 24,
-                  fontWeight: FontWeight.w600,
-                  color: _textDark,
                 ),
               ),
             ),
@@ -283,11 +261,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
               const SizedBox(height: 12),
               Text(
                 '$name (Camera Off)',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: _textLight,
-                ),
+                style: DesignTokens.bodyLarge,
               ),
             ],
           ],
@@ -300,8 +274,8 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: _cardSurface.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(999),
+        color: DesignTokens.cardSurface.withValues(alpha: 0.85),
+        borderRadius: DesignTokens.radiusPill,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -317,11 +291,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
           const SizedBox(width: 8),
           Text(
             'Room: ${widget.roomId}',
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: _textLight,
-            ),
+            style: DesignTokens.caption.copyWith(color: DesignTokens.textLight),
           ),
         ],
       ),
@@ -334,35 +304,38 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          // Toggle Microphone
           _buildControlButton(
             icon: _isMicMuted ? Icons.mic_off_rounded : Icons.mic_rounded,
-            backgroundColor: _accentPeriwinkle,
-            iconColor: _textDark,
+            backgroundColor: DesignTokens.accentPeriwinkle,
+            iconColor: DesignTokens.textDark,
+            semanticLabel: 'Mute Microphone',
+            semanticHint: _isMicMuted ? 'Unmute microphone audio' : 'Mute microphone audio',
+            isToggled: _isMicMuted,
             onPressed: _toggleMic,
           ),
-
-          // Toggle Camera
           _buildControlButton(
             icon: _isCameraEnabled ? Icons.videocam_rounded : Icons.videocam_off_rounded,
-            backgroundColor: _accentPeriwinkle,
-            iconColor: _textDark,
+            backgroundColor: DesignTokens.accentPeriwinkle,
+            iconColor: DesignTokens.textDark,
+            semanticLabel: 'Camera Toggle',
+            semanticHint: _isCameraEnabled ? 'Turn camera off' : 'Turn camera on',
+            isToggled: !_isCameraEnabled,
             onPressed: _toggleCamera,
           ),
-
-          // Switch Front/Rear Camera
           _buildControlButton(
             icon: Icons.flip_camera_ios_rounded,
-            backgroundColor: _accentPeriwinkle,
-            iconColor: _textDark,
+            backgroundColor: DesignTokens.accentPeriwinkle,
+            iconColor: DesignTokens.textDark,
+            semanticLabel: 'Flip Camera',
+            semanticHint: 'Switch between front and rear cameras',
             onPressed: _switchCamera,
           ),
-
-          // End Call Button (Neon Pink)
           _buildControlButton(
             icon: Icons.call_end_rounded,
-            backgroundColor: _accentNeonPink,
-            iconColor: _textDark,
+            backgroundColor: DesignTokens.accentNeonPink,
+            iconColor: DesignTokens.textDark,
+            semanticLabel: 'End Call',
+            semanticHint: 'Disconnect from video room and leave session',
             isEndCall: true,
             onPressed: _endCall,
           ),
@@ -375,26 +348,45 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     required IconData icon,
     required Color backgroundColor,
     required Color iconColor,
+    required String semanticLabel,
+    required String semanticHint,
     required VoidCallback onPressed,
     bool isEndCall = false,
+    bool? isToggled,
   }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(999),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          width: isEndCall ? 64 : 52,
-          height: isEndCall ? 64 : 52,
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            icon,
-            size: isEndCall ? 28 : 22,
-            color: iconColor,
+    final double size = isEndCall ? 64.0 : 52.0;
+    return Semantics(
+      label: semanticLabel,
+      hint: semanticHint,
+      button: true,
+      enabled: true,
+      toggled: isToggled,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minWidth: 48,
+          minHeight: 48,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: DesignTokens.radiusPill,
+            splashColor: DesignTokens.textDark.withValues(alpha: 0.15),
+            highlightColor: DesignTokens.textDark.withValues(alpha: 0.1),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                color: backgroundColor,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: isEndCall ? 28 : 22,
+                color: iconColor,
+              ),
+            ),
           ),
         ),
       ),
@@ -403,7 +395,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
 
   Widget _buildOverlayState() {
     return Container(
-      color: _bgDeepBlack.withValues(alpha: 0.9),
+      color: DesignTokens.bgDeepBlack.withValues(alpha: 0.9),
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -412,55 +404,42 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
             children: [
               if (_isLoading) ...[
                 const CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(_accentPeriwinkle),
+                  valueColor: AlwaysStoppedAnimation<Color>(DesignTokens.accentPeriwinkle),
                 ),
                 const SizedBox(height: 20),
                 Text(
                   'Connecting to video engine...',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: _textLight,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: DesignTokens.bodyMedium,
                 ),
               ] else if (_errorMessage != null) ...[
                 const Icon(
                   Icons.error_outline_rounded,
-                  color: _accentNeonPink,
+                  color: DesignTokens.accentNeonPink,
                   size: 48,
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'Connection Error',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    color: _textLight,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: DesignTokens.headlineMedium,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   _errorMessage!,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: Colors.white70,
-                  ),
+                  style: DesignTokens.caption.copyWith(color: Colors.white70),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: _endCall,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _accentNeonPink,
-                    foregroundColor: _textDark,
+                    backgroundColor: DesignTokens.accentNeonPink,
+                    foregroundColor: DesignTokens.textDark,
                     shape: const StadiumBorder(),
                     elevation: 0,
                   ),
                   child: Text(
                     'Close Call',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: DesignTokens.buttonTextDark,
                   ),
                 ),
               ],

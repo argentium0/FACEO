@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../app/theme/design_tokens.dart';
 import '../../services/auth_service.dart';
 
-/// Minimalist, dark-themed Login and Sign-Up screen adhering to FACEO design tokens.
+/// Minimalist, dark-themed Login and Sign-Up screen adhering strictly to FACEO design tokens.
 class LoginScreen extends StatefulWidget {
   final AuthService? authService;
 
@@ -29,14 +29,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _showResendVerification = false;
   String? _lastUnverifiedEmail;
 
-  // FACEO Design Tokens (Strict Compliance)
-  static const Color _bgPrimary = Color(0xFF1F1F1F);
-  static const Color _surfaceCard = Color(0xFF313131);
-  static const Color _accentLavender = Color(0xFFB7BEFE);
-  static const Color _textPrimary = Color(0xFFFFFFFF);
-  static const Color _textSecondary = Color(0x99FFFFFF);
-  static const Color _textOnAccent = Color(0xFF1F1F1F);
-
   @override
   void initState() {
     super.initState();
@@ -56,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor: _surfaceCard,
+        backgroundColor: DesignTokens.cardSurface,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -64,9 +56,8 @@ class _LoginScreenState extends State<LoginScreen> {
         behavior: SnackBarBehavior.floating,
         content: Text(
           message,
-          style: GoogleFonts.poppins(
-            color: isError ? const Color(0xFFFF95DD) : _accentLavender,
-            fontSize: 14,
+          style: DesignTokens.bodyMedium.copyWith(
+            color: isError ? DesignTokens.accentNeonPink : DesignTokens.accentPeriwinkle,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -103,7 +94,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (result.isSuccess) {
       _showSnackBar('Welcome to FACEO!', isError: false);
-      // Navigation to Home screen will be triggered via auth state listener
     } else {
       if (result.errorCode == 'email-not-verified') {
         setState(() {
@@ -148,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bgPrimary,
+      backgroundColor: DesignTokens.bgDeepBlack,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -159,25 +149,20 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // App Branding Header
                   Text(
                     'FACEO',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      fontSize: 36,
-                      fontWeight: FontWeight.w700,
-                      color: _textPrimary,
+                    style: DesignTokens.displayLarge.copyWith(
                       letterSpacing: 2.0,
+                      fontSize: 36,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     _isSignUpMode ? 'Create your FACEO account' : 'Sign in to continue',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: _textSecondary,
+                    style: DesignTokens.bodyMedium.copyWith(
+                      color: DesignTokens.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 36),
@@ -186,64 +171,72 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: _surfaceCard,
-                      borderRadius: BorderRadius.circular(999),
+                      color: DesignTokens.cardSurface,
+                      borderRadius: DesignTokens.radiusPill,
                     ),
                     child: Row(
                       children: [
                         Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              if (_isSignUpMode) {
-                                setState(() {
-                                  _isSignUpMode = false;
-                                  _showResendVerification = false;
-                                });
-                              }
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: !_isSignUpMode ? _accentLavender : Colors.transparent,
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                'Sign In',
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: !_isSignUpMode ? _textOnAccent : _textSecondary,
+                          child: Semantics(
+                            label: 'Sign In Mode',
+                            button: true,
+                            selected: !_isSignUpMode,
+                            child: InkWell(
+                              onTap: () {
+                                if (_isSignUpMode) {
+                                  setState(() {
+                                    _isSignUpMode = false;
+                                    _showResendVerification = false;
+                                  });
+                                }
+                              },
+                              borderRadius: DesignTokens.radiusPill,
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: !_isSignUpMode ? DesignTokens.accentPeriwinkle : Colors.transparent,
+                                  borderRadius: DesignTokens.radiusPill,
+                                ),
+                                child: Text(
+                                  'Sign In',
+                                  textAlign: TextAlign.center,
+                                  style: DesignTokens.buttonTextDark.copyWith(
+                                    color: !_isSignUpMode ? DesignTokens.textDark : DesignTokens.textSecondary,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
                         Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              if (!_isSignUpMode) {
-                                setState(() {
-                                  _isSignUpMode = true;
-                                  _showResendVerification = false;
-                                });
-                              }
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: _isSignUpMode ? _accentLavender : Colors.transparent,
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                'Sign Up',
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: _isSignUpMode ? _textOnAccent : _textSecondary,
+                          child: Semantics(
+                            label: 'Sign Up Mode',
+                            button: true,
+                            selected: _isSignUpMode,
+                            child: InkWell(
+                              onTap: () {
+                                if (!_isSignUpMode) {
+                                  setState(() {
+                                    _isSignUpMode = true;
+                                    _showResendVerification = false;
+                                  });
+                                }
+                              },
+                              borderRadius: DesignTokens.radiusPill,
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: _isSignUpMode ? DesignTokens.accentPeriwinkle : Colors.transparent,
+                                  borderRadius: DesignTokens.radiusPill,
+                                ),
+                                child: Text(
+                                  'Sign Up',
+                                  textAlign: TextAlign.center,
+                                  style: DesignTokens.buttonTextDark.copyWith(
+                                    color: _isSignUpMode ? DesignTokens.textDark : DesignTokens.textSecondary,
+                                  ),
                                 ),
                               ),
                             ),
@@ -254,7 +247,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 28),
 
-                  // Display Name Field (Sign Up Mode Only)
                   if (_isSignUpMode) ...[
                     _buildTextField(
                       controller: _displayNameController,
@@ -270,7 +262,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 16),
                   ],
 
-                  // Email Field
                   _buildTextField(
                     controller: _emailController,
                     hintText: 'Email address',
@@ -288,7 +279,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Password Field
                   _buildTextField(
                     controller: _passwordController,
                     hintText: 'Password',
@@ -306,117 +296,113 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Resend Verification Affordance
                   if (_showResendVerification) ...[
-                    GestureDetector(
-                      onTap: _resendVerificationEmail,
-                      child: Text(
-                        'Didn\'t receive verification email? Tap to resend.',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: _accentLavender,
-                          decoration: TextDecoration.underline,
+                    Semantics(
+                      label: 'Resend Verification Email',
+                      button: true,
+                      child: InkWell(
+                        onTap: _resendVerificationEmail,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Text(
+                            'Didn\'t receive verification email? Tap to resend.',
+                            textAlign: TextAlign.center,
+                            style: DesignTokens.caption.copyWith(
+                              color: DesignTokens.accentPeriwinkle,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 20),
                   ],
 
-                  // Primary Action Button (Periwinkle Pill)
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _submitEmailForm,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _accentLavender,
-                      foregroundColor: _textOnAccent,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(999),
+                  Semantics(
+                    label: _isSignUpMode ? 'Create Account' : 'Sign In',
+                    button: true,
+                    enabled: !_isLoading,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _submitEmailForm,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: DesignTokens.accentPeriwinkle,
+                        foregroundColor: DesignTokens.textDark,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: const StadiumBorder(),
+                        disabledBackgroundColor: DesignTokens.accentPeriwinkle.withValues(alpha: 0.5),
                       ),
-                      disabledBackgroundColor: _accentLavender.withValues(alpha: 0.5),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(DesignTokens.textDark),
+                              ),
+                            )
+                          : Text(
+                              _isSignUpMode ? 'Create Account' : 'Sign In',
+                              style: DesignTokens.buttonTextDark,
+                            ),
                     ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(_textOnAccent),
-                            ),
-                          )
-                        : Text(
-                            _isSignUpMode ? 'Create Account' : 'Sign In',
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
                   ),
                   const SizedBox(height: 20),
 
-                  // Divider
                   Row(
                     children: [
-                      const Expanded(child: Divider(color: _surfaceCard, thickness: 1)),
+                      const Expanded(child: Divider(color: DesignTokens.cardSurface, thickness: 1)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
                           'OR',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: _textSecondary,
-                          ),
+                          style: DesignTokens.caption.copyWith(color: DesignTokens.textSecondary),
                         ),
                       ),
-                      const Expanded(child: Divider(color: _surfaceCard, thickness: 1)),
+                      const Expanded(child: Divider(color: DesignTokens.cardSurface, thickness: 1)),
                     ],
                   ),
                   const SizedBox(height: 20),
 
-                  // Google Sign-In Action Button (Flat Surface Pill)
-                  OutlinedButton(
-                    onPressed: _isGoogleLoading ? null : _handleGoogleSignIn,
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: _surfaceCard,
-                      foregroundColor: _textPrimary,
-                      side: BorderSide.none,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(999),
+                  Semantics(
+                    label: 'Continue with Google Sign-In',
+                    button: true,
+                    enabled: !_isGoogleLoading,
+                    child: OutlinedButton(
+                      onPressed: _isGoogleLoading ? null : _handleGoogleSignIn,
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: DesignTokens.cardSurface,
+                        foregroundColor: DesignTokens.textLight,
+                        side: BorderSide.none,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: const StadiumBorder(),
                       ),
-                    ),
-                    child: _isGoogleLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(_textPrimary),
-                            ),
-                          )
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.g_mobiledata,
-                                size: 24,
-                                color: _textPrimary,
+                      child: _isGoogleLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(DesignTokens.textLight),
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Continue with Google',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  color: _textPrimary,
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.g_mobiledata,
+                                  size: 24,
+                                  color: DesignTokens.textLight,
                                 ),
-                              ),
-                            ],
-                          ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Continue with Google',
+                                  style: DesignTokens.buttonTextLight,
+                                ),
+                              ],
+                            ),
+                    ),
                   ),
                 ],
               ),
@@ -435,49 +421,44 @@ class _LoginScreenState extends State<LoginScreen> {
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
   }) {
-    return TextFormField(
-      controller: controller,
-      obscureText: obscureText,
-      keyboardType: keyboardType,
-      style: GoogleFonts.poppins(
-        color: _textPrimary,
-        fontSize: 14,
-      ),
-      cursorColor: _accentLavender,
-      validator: validator,
-      decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: GoogleFonts.poppins(
-          color: _textSecondary,
-          fontSize: 14,
-        ),
-        prefixIcon: Icon(icon, color: _textSecondary, size: 20),
-        filled: true,
-        fillColor: _surfaceCard,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: _accentLavender, width: 1.5),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: Color(0xFFFF95DD), width: 1),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: Color(0xFFFF95DD), width: 1.5),
-        ),
-        errorStyle: GoogleFonts.poppins(
-          color: const Color(0xFFFF95DD),
-          fontSize: 12,
+    return Semantics(
+      label: hintText,
+      textField: true,
+      child: TextFormField(
+        controller: controller,
+        obscureText: obscureText,
+        keyboardType: keyboardType,
+        style: DesignTokens.bodyMedium,
+        cursorColor: DesignTokens.accentPeriwinkle,
+        validator: validator,
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: DesignTokens.bodySecondary,
+          prefixIcon: Icon(icon, color: DesignTokens.textSecondary, size: 20),
+          filled: true,
+          fillColor: DesignTokens.cardSurface,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: const BorderSide(color: DesignTokens.accentPeriwinkle, width: 1.5),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: const BorderSide(color: DesignTokens.accentNeonPink, width: 1),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: const BorderSide(color: DesignTokens.accentNeonPink, width: 1.5),
+          ),
+          errorStyle: DesignTokens.caption.copyWith(color: DesignTokens.accentNeonPink),
         ),
       ),
     );
