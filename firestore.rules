@@ -3,11 +3,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Default Deny All Collections & Documents
-    match /{document=**} {
-      allow read, write: if false;
-    }
-    
     // User Profile Document Access
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
@@ -15,18 +10,8 @@ service cloud.firestore {
     
     // Ephemeral Rooms Collection Access
     match /rooms/{roomId} {
-      // Room is active and not locked out if emptyAt is not set OR if request.time is within 5 minutes of emptyAt
-      function isNotExpired() {
-        return !("emptyAt" in resource.data) || 
-               resource.data.emptyAt == null || 
-               request.time < resource.data.emptyAt + duration.value(5, 'm');
-      }
-
-      allow create: if request.auth != null;
-      allow read: if request.auth != null && isNotExpired();
-      allow update: if request.auth != null && isNotExpired();
-      // Crucial: Allow users to delete a room document even if it is expired (for client sweeper)
-      allow delete: if request.auth != null;
+      allow create, read: if request.auth != null;
+      allow update, delete: if request.auth != null;
     }
     
   }
