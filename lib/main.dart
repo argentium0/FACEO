@@ -9,6 +9,7 @@ import 'firebase_options.dart';
 import 'services/auth_service.dart';
 import 'ui/screens/home_dashboard.dart';
 import 'ui/screens/login_screen.dart';
+import 'ui/screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,7 +49,7 @@ class MyApp extends StatelessWidget {
       title: 'FACEO',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      home: const AuthGate(),
+      home: const SplashScreen(),
     );
   }
 }
