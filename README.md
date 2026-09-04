@@ -160,6 +160,6 @@ flutter test
 
 <div align="center">
 
-Made with ❤️ by the **FACEO Engineering Team**
+Made with ❤️. Kept strictly **Open Source**
 
 </div>
