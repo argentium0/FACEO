@@ -66,9 +66,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>FACEO uses speech recognition for live captions during low-bandwidth audio fallback.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>FACEO requires access to your camera to capture video for real-time 1-on-1 and group video calls.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>FACEO requires microphone access for audio calling and live captions.</string>
+	<string>FACEO requires access to your microphone for real-time audio calling, voice communication, and live speech captions.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>FACEO uses speech recognition to generate live text captions during low-bandwidth audio-only fallback mode.</string>
 </dict>
 </plist>

@@ -305,7 +305,12 @@ class _CallScreen1v1State extends State<CallScreen1v1> {
               decoration: BoxDecoration(
                 color: DesignTokens.cardSurface,
                 borderRadius: DesignTokens.radiusCard,
-                border: Border.all(color: DesignTokens.bgDeepBlack, width: 2),
+                border: const Border(
+                  top: BorderSide(color: DesignTokens.bgDeepBlack, width: 2),
+                  bottom: BorderSide(color: DesignTokens.bgDeepBlack, width: 2),
+                  left: BorderSide(color: DesignTokens.bgDeepBlack, width: 2),
+                  right: BorderSide(color: DesignTokens.bgDeepBlack, width: 2),
+                ),
               ),
               clipBehavior: Clip.antiAlias,
               child: _isCameraEnabled && _localVideoCanvas != null
@@ -392,21 +397,31 @@ class _CallScreen1v1State extends State<CallScreen1v1> {
         _buildControlButton(
           icon: _isMicMuted ? Icons.mic_off_rounded : Icons.mic_rounded,
           backgroundColor: DesignTokens.accentPeriwinkle,
+          semanticLabel: 'Mute Microphone',
+          semanticHint: _isMicMuted ? 'Unmute microphone audio' : 'Mute microphone audio',
+          isToggled: _isMicMuted,
           onPressed: _toggleMic,
         ),
         _buildControlButton(
           icon: _isCameraEnabled ? Icons.videocam_rounded : Icons.videocam_off_rounded,
           backgroundColor: DesignTokens.accentPeriwinkle,
+          semanticLabel: 'Camera Toggle',
+          semanticHint: _isCameraEnabled ? 'Turn camera off' : 'Turn camera on',
+          isToggled: !_isCameraEnabled,
           onPressed: _toggleCamera,
         ),
         _buildControlButton(
           icon: Icons.flip_camera_ios_rounded,
           backgroundColor: DesignTokens.accentPeriwinkle,
+          semanticLabel: 'Flip Camera',
+          semanticHint: 'Switch between front and rear cameras',
           onPressed: _switchCamera,
         ),
         _buildControlButton(
           icon: Icons.call_end_rounded,
           backgroundColor: DesignTokens.accentNeonPink,
+          semanticLabel: 'End Call',
+          semanticHint: 'Disconnect from video room and leave session',
           isEndCall: true,
           onPressed: _endCall,
         ),
@@ -417,23 +432,45 @@ class _CallScreen1v1State extends State<CallScreen1v1> {
   Widget _buildControlButton({
     required IconData icon,
     required Color backgroundColor,
+    required String semanticLabel,
+    required String semanticHint,
     required VoidCallback onPressed,
     bool isEndCall = false,
+    bool? isToggled,
   }) {
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: DesignTokens.radiusPill,
-      child: Container(
-        width: isEndCall ? 64 : 52,
-        height: isEndCall ? 64 : 52,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          shape: BoxShape.circle,
+    final double size = isEndCall ? 64.0 : 52.0;
+    return Semantics(
+      label: semanticLabel,
+      hint: semanticHint,
+      button: true,
+      enabled: true,
+      toggled: isToggled,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minWidth: 48,
+          minHeight: 48,
         ),
-        child: Icon(
-          icon,
-          size: isEndCall ? 28 : 22,
-          color: DesignTokens.textDark,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: DesignTokens.radiusPill,
+            splashColor: DesignTokens.textDark.withValues(alpha: 0.15),
+            highlightColor: DesignTokens.textDark.withValues(alpha: 0.1),
+            child: Container(
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                color: backgroundColor,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: isEndCall ? 28 : 22,
+                color: DesignTokens.textDark,
+              ),
+            ),
+          ),
         ),
       ),
     );

@@ -94,83 +94,87 @@ class _ParticipantTileWidgetState extends State<ParticipantTileWidget> {
     final isSpeaker = widget.isActiveSpeaker;
     final p = widget.participant;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      decoration: BoxDecoration(
-        color: DesignTokens.cardSurface,
-        borderRadius: DesignTokens.radiusCard,
-        border: Border.all(
-          color: isSpeaker ? DesignTokens.accentPeriwinkle : Colors.transparent,
-          width: isSpeaker ? 2.5 : 0.0,
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        children: [
-          // Video Feed or Camera Off Avatar Surface
-          Positioned.fill(
-            child: p.isCameraEnabled && p.videoWidget != null
-                ? p.videoWidget!
-                : _buildAvatarPlaceholder(p.userName, p.isLocal),
+    return Semantics(
+      label: p.isLocal ? '${p.userName} (You)' : p.userName,
+      hint: isSpeaker ? 'Currently speaking' : (p.isCameraEnabled ? 'Video active' : 'Camera turned off'),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        decoration: BoxDecoration(
+          color: DesignTokens.cardSurface,
+          borderRadius: DesignTokens.radiusCard,
+          border: Border.all(
+            color: isSpeaker ? DesignTokens.accentPeriwinkle : Colors.transparent,
+            width: isSpeaker ? 2.5 : 0.0,
           ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            // Video Feed or Camera Off Avatar Surface
+            Positioned.fill(
+              child: p.isCameraEnabled && p.videoWidget != null
+                  ? p.videoWidget!
+                  : _buildAvatarPlaceholder(p.userName, p.isLocal),
+            ),
 
-          // Top Active Speaker Tag
-          if (isSpeaker)
+            // Top Active Speaker Tag
+            if (isSpeaker)
+              Positioned(
+                top: 10,
+                left: 10,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: DesignTokens.accentPeriwinkle,
+                    borderRadius: DesignTokens.radiusPill,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.volume_up_rounded, size: 12, color: DesignTokens.textDark),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Speaking',
+                        style: DesignTokens.caption.copyWith(
+                          color: DesignTokens.textDark,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+            // Bottom Participant Label Overlay
             Positioned(
-              top: 10,
-              left: 10,
+              bottom: 8,
+              left: 8,
+              right: 8,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: DesignTokens.accentPeriwinkle,
+                  color: DesignTokens.bgDeepBlack.withValues(alpha: 0.75),
                   borderRadius: DesignTokens.radiusPill,
                 ),
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.volume_up_rounded, size: 12, color: DesignTokens.textDark),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Speaking',
-                      style: DesignTokens.caption.copyWith(
-                        color: DesignTokens.textDark,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 10,
+                    Expanded(
+                      child: Text(
+                        p.isLocal ? '${p.userName} (You)' : p.userName,
+                        style: DesignTokens.caption.copyWith(color: DesignTokens.textLight),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    if (!p.isCameraEnabled)
+                      const Icon(Icons.videocam_off_rounded, size: 14, color: DesignTokens.accentNeonPink),
                   ],
                 ),
               ),
             ),
-
-          // Bottom Participant Label Overlay
-          Positioned(
-            bottom: 8,
-            left: 8,
-            right: 8,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: DesignTokens.bgDeepBlack.withValues(alpha: 0.75),
-                borderRadius: DesignTokens.radiusPill,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      p.isLocal ? '${p.userName} (You)' : p.userName,
-                      style: DesignTokens.caption.copyWith(color: DesignTokens.textLight),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (!p.isCameraEnabled)
-                    const Icon(Icons.videocam_off_rounded, size: 14, color: DesignTokens.accentNeonPink),
-                ],
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

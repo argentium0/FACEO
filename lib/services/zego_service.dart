@@ -197,17 +197,23 @@ class ZegoService {
   /// Logs out of current room, stops stream publishing/playing, and releases engine resources.
   Future<void> leaveRoomAndDestroyEngine() async {
     if (_currentRoomId != null) {
-      await ZegoExpressEngine.instance.stopPublishingStream();
-      await ZegoExpressEngine.instance.logoutRoom(_currentRoomId!);
+      try {
+        await ZegoExpressEngine.instance.stopPublishingStream();
+        await ZegoExpressEngine.instance.logoutRoom(_currentRoomId!);
+      } catch (_) {}
       _currentRoomId = null;
       _currentUserId = null;
       _currentStreamId = null;
     }
 
     _onStreamUpdateListener = null;
+    ZegoExpressEngine.onRoomStreamUpdate = null;
+    ZegoExpressEngine.onNetworkQuality = null;
 
     if (_isEngineInitialized) {
-      await ZegoExpressEngine.destroyEngine();
+      try {
+        await ZegoExpressEngine.destroyEngine();
+      } catch (_) {}
       _isEngineInitialized = false;
     }
   }
