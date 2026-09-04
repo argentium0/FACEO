@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="assets/logo.png" alt="FACEO Logo" width="128" height="128" />
+  <img src="assets/logo.png" alt="FACEO Logo" width="240" height="240" />
 
   # FACEO
 
